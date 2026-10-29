@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
-const BASE_URL = 'http://192.168.1.25:3030'; // IP des Laptops eintragen
+const BASE_URL = 'http://192.168.1.110:3030'; // IP des Laptops eintragen
 
 export type Movie = { id: number; title: string; imdbRating?: number };
 
