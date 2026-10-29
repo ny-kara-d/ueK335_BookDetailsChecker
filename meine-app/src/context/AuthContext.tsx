@@ -1,12 +1,20 @@
 // Datei von Claude, Zeitgründe und Präzision
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { login as apiLogin, register as apiRegister } from '../client';
 
-const AuthContext = createContext(null);
+type AuthContextType = {
+  email: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  loading: boolean;
+};
 
-export function AuthProvider({ children }) {
-  const [email, setEmail] = useState(null);
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,12 +24,12 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
-  async function login(emailInput, password) {
+  async function login(emailInput: string, password: string) {
     await apiLogin(emailInput, password);
     setEmail(emailInput);
   }
 
-  async function register(emailInput, password) {
+  async function register(emailInput: string, password: string) {
     await apiRegister(emailInput, password);
     setEmail(emailInput);
   }
@@ -39,4 +47,8 @@ export function AuthProvider({ children }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  return ctx;
+}
