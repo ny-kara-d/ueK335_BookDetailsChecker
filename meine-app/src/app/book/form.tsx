@@ -1,27 +1,44 @@
 // Von Claude generiert (KI-Einsatz, siehe Technischer Bericht)
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Appbar, Button, HelperText, Text, TextInput, useTheme } from 'react-native-paper';
+import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Appbar, Button, HelperText, Menu, Text, TextInput, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { createBook, getBook, updateBook } from '../../api/client';
+import { createBook, GENRES, getBook, updateBook } from '../../api/client';
 import { useSnackbar } from '../../context/SnackbarContext';
 import BookCover from '../../components/BookCover';
 import ErrorBanner from '../../components/ErrorBanner';
 import { COVER_COLORS } from '../../theme';
 import { isOptionalNumber } from '../../validation';
 
+// 4,5 Einträge sichtbar: der halbe Eintrag zeigt, dass man scrollen kann
+const GENRE_LIST_HEIGHT = 48 * 4.5;
+
+const GENRE_ICONS: Record<string, string> = {
+  Biografie: 'account-outline',
+  Drama: 'drama-masks',
+  Fantasy: 'auto-fix',
+  Kinderbuch: 'teddy-bear',
+  Krimi: 'magnify',
+  Lyrik: 'feather',
+  Roman: 'book-open-page-variant-outline',
+  Sachbuch: 'school-outline',
+  'Science-Fiction': 'rocket-launch-outline',
+};
+
 const EMPTY = { title: '', author: '', genre: '', year: '', pages: '', description: '', coverColor: COVER_COLORS[0] };
 
 export default function BookFormScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { colors } = useTheme();
+  const { colors, roundness } = useTheme();
   const showSnack = useSnackbar();
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [genreOpen, setGenreOpen] = useState(false);
+  const [genreWidth, setGenreWidth] = useState(0);
   const set = (key: keyof typeof form) => (value: string) => setForm({ ...form, [key]: value });
 
   useEffect(() => {
@@ -39,7 +56,7 @@ export default function BookFormScreen() {
   const errors = {
     title: form.title.trim() ? null : 'Bitte gib einen Titel ein.',
     author: form.author.trim() ? null : 'Bitte gib eine Autorin oder einen Autor ein.',
-    genre: form.genre.trim() ? null : 'Bitte gib ein Genre ein, z. B. Roman.',
+    genre: GENRES.includes(form.genre) ? null : 'Bitte wähle ein Genre aus.',
     year: isOptionalNumber(form.year, 0, new Date().getFullYear()) ? null : 'Nur Zahlen, z. B. 1880.',
     pages: isOptionalNumber(form.pages, 1, 99999) ? null : 'Nur Zahlen, z. B. 286.',
   };
@@ -54,7 +71,7 @@ export default function BookFormScreen() {
     const book = {
       title: form.title.trim(),
       author: form.author.trim(),
-      genre: form.genre.trim(),
+      genre: form.genre,
       year: form.year ? Number(form.year) : undefined,
       pages: form.pages ? Number(form.pages) : undefined,
       description: form.description.trim(),
@@ -106,7 +123,55 @@ export default function BookFormScreen() {
             <HelperText type="error" visible={show('title')}>{errors.title}</HelperText>
             <TextInput mode="outlined" label="Autor:in *" value={form.author} onChangeText={set('author')} error={show('author')} disabled={saving} />
             <HelperText type="error" visible={show('author')}>{errors.author}</HelperText>
-            <TextInput mode="outlined" label="Genre *" value={form.genre} onChangeText={set('genre')} error={show('genre')} disabled={saving} />
+            <Menu
+              visible={genreOpen}
+              onDismiss={() => setGenreOpen(false)}
+              anchorPosition="bottom"
+              elevation={3}
+              contentStyle={[styles.genreMenu, { width: genreWidth, borderRadius: roundness * 3, backgroundColor: colors.surface }]}
+              anchor={
+                <Pressable
+                  onPress={() => { Keyboard.dismiss(); setGenreOpen(true); }}
+                  onLayout={(e) => setGenreWidth(e.nativeEvent.layout.width)}
+                  disabled={saving}
+                  accessibilityRole="button"
+                  accessibilityLabel="Genre auswählen"
+                >
+                  <View pointerEvents="none">
+                    <TextInput
+                      mode="outlined"
+                      label="Genre *"
+                      value={form.genre}
+                      editable={false}
+                      left={form.genre in GENRE_ICONS ? <TextInput.Icon icon={GENRE_ICONS[form.genre]} /> : undefined}
+                      right={<TextInput.Icon icon={genreOpen ? 'chevron-up' : 'chevron-down'} />}
+                      outlineColor={genreOpen ? colors.primary : undefined}
+                      error={show('genre')}
+                      disabled={saving}
+                    />
+                  </View>
+                </Pressable>
+              }
+            >
+              {/* Feste Höhe mit Scrollen: so passt die Liste immer unter das Feld und Paper klappt sie nicht nach oben */}
+              <ScrollView style={{ maxHeight: GENRE_LIST_HEIGHT }}>
+                {GENRES.map((g) => {
+                  const selected = form.genre === g;
+                  return (
+                    <Menu.Item
+                      key={g}
+                      title={g}
+                      leadingIcon={GENRE_ICONS[g]}
+                      trailingIcon={selected ? 'check' : undefined}
+                      titleStyle={selected && { color: colors.primary, fontWeight: '600' }}
+                      style={[styles.genreItem, { maxWidth: genreWidth }, selected && { backgroundColor: colors.secondaryContainer }]}
+                      contentStyle={{ flex: 1, maxWidth: genreWidth }}
+                      onPress={() => { set('genre')(g); setGenreOpen(false); }}
+                    />
+                  );
+                })}
+              </ScrollView>
+            </Menu>
             <HelperText type="error" visible={show('genre')}>{errors.genre}</HelperText>
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
@@ -136,5 +201,7 @@ const styles = StyleSheet.create({
   colors: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   color: { width: 32, height: 32, borderRadius: 16 },
   row: { flexDirection: 'row', gap: 12 },
+  genreMenu: { marginTop: 4, paddingVertical: 4, overflow: 'hidden' },
+  genreItem: { marginHorizontal: 4, borderRadius: 8 },
   bottom: { padding: 16, paddingTop: 12 },
 });

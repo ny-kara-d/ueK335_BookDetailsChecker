@@ -16,7 +16,8 @@ function RootStack() {
       <Stack.Protected guard={!!user}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="book/[id]" />
-        <Stack.Screen name="book/form" options={{ presentation: 'modal' }} />
+        {/* Kein presentation: 'modal': iOS zeichnet Paper-Menüs (Portal) sonst hinter dem Modal */}
+        <Stack.Screen name="book/form" options={{ animation: 'slide_from_bottom' }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
         <Stack.Screen name="login" />

@@ -21,7 +21,10 @@ export type Book = {
   rating?: number;
 };
 
-export type User = { email: string; firstname?: string; lastname?: string; age?: number };
+// Feste Auswahl statt Freitext: verhindert Schreibvarianten wie «roman» / «Roman» im Genre-Filter
+export const GENRES = ['Biografie', 'Drama', 'Fantasy', 'Kinderbuch', 'Krimi', 'Lyrik', 'Roman', 'Sachbuch', 'Science-Fiction'];
+
+export type User ={ email: string; firstname?: string; lastname?: string; age?: number };
 
 /**
  * Meldet an oder registriert und speichert Token + Profil in SecureStore.

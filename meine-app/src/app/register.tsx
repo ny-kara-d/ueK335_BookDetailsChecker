@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 import ErrorBanner from '../components/ErrorBanner';
+import { useTemporaryError } from '../hooks/useTemporaryError';
 import { isEmail, isOptionalNumber, MIN_PASSWORD } from '../validation';
 
 export default function RegisterScreen() {
@@ -14,21 +15,28 @@ export default function RegisterScreen() {
   const [form, setForm] = useState({ firstname: '', lastname: '', age: '', email: '', password: '' });
   const [showErrors, setShowErrors] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const set = (key: keyof typeof form) => (value: string) => setForm({ ...form, [key]: value });
+  const [error, setError] = useTemporaryError();
+  // Wer etwas ändert, hat die Meldung gelesen: Banner sofort ausblenden
+  const set = (key: keyof typeof form) => (value: string) => {
+    setForm({ ...form, [key]: value });
+    setError(null);
+  };
 
+  const ageIsNumber = /^\d*$/.test(form.age.trim());
   const errors = {
-    age: isOptionalNumber(form.age, 1, 120) ? null : 'Bitte gib ein Alter zwischen 1 und 120 ein.',
+    age: !ageIsNumber ? 'Das Alter muss eine Zahl sein.'
+      : isOptionalNumber(form.age, 1, 120) ? null : 'Bitte gib ein Alter zwischen 1 und 120 ein.',
     email: isEmail(form.email) ? null : 'Bitte gib eine gültige E-Mail-Adresse ein.',
     password: form.password.length >= MIN_PASSWORD ? null : `Das Passwort braucht mindestens ${MIN_PASSWORD} Zeichen.`,
   };
-  const show = (key: keyof typeof errors) => showErrors && !!errors[key];
+  // Ausgefüllte Felder sofort prüfen, leere Pflichtfelder erst nach dem Absenden melden
+  const show = (key: keyof typeof errors) => !!errors[key] && (showErrors || form[key].trim() !== '');
 
   async function submit() {
     setShowErrors(true);
+    setError(null);
     if (Object.values(errors).some(Boolean)) return;
     setLoading(true);
-    setError(null);
     try {
       await register({
         email: form.email.trim(),
