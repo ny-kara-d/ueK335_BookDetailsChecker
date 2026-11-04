@@ -15,6 +15,7 @@ import {
   useAudioRecorderState,
 } from 'expo-audio';
 import { Book, VoiceNote, updateBook } from '../api/client';
+import { useSnackbar } from '../context/SnackbarContext';
 
 // Realistischer dB-Bereich für Mikrofonpegel: leise (-60) bis sehr laut (0)
 const MIN_DB = -60;
@@ -48,10 +49,14 @@ type NameDialog = { mode: 'new' | 'rename'; targetId?: string; uri?: string; val
  */
 export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
   const { colors } = useTheme();
+  const showSnack = useSnackbar();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dialog, setDialog] = useState<NameDialog>(null);
-  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // Name ist bewusst "lastPlayed", nicht "playing": wird beim Stoppen/Fertigspielen nicht
+  // zurückgesetzt, nur die Anzeige (unten) prüft zusätzlich playerStatus.playing.
+  const [lastPlayedId, setLastPlayedId] = useState<string | null>(null);
 
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
   const recorderState = useAudioRecorderState(recorder, 100); // Pegel alle 100ms
@@ -95,7 +100,12 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
   }
 
   async function stopRecording() {
-    await recorder.stop();
+    try {
+      await recorder.stop();
+    } catch (e) {
+      setError((e as Error).message);
+      return;
+    }
     const uri = recorder.uri;
     if (!uri) return;
     setDialog({ mode: 'new', uri, value: `Notiz ${voiceNotes.length + 1}` });
@@ -112,23 +122,28 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
     setDialog(null);
   }
 
-  function remove(id: string) {
-    if (playingId === id) {
-      player.pause();
-      setPlayingId(null);
-    }
-    save(voiceNotes.filter((n) => n.id !== id));
+  function requestRemove(id: string) {
+    setConfirmDeleteId(id);
+  }
+
+  async function confirmRemove() {
+    const note = voiceNotes.find((n) => n.id === confirmDeleteId);
+    setConfirmDeleteId(null);
+    if (!note) return;
+    if (lastPlayedId === note.id) player.pause();
+    const next = voiceNotes.filter((n) => n.id !== note.id);
+    await save(next);
+    showSnack(`«${note.name}» wurde gelöscht`, { label: 'Rückgängig', onPress: () => save([...next, note]) });
   }
 
   function togglePlay(note: VoiceNote) {
-    if (playingId === note.id && playerStatus.playing) {
+    if (lastPlayedId === note.id && playerStatus.playing) {
       player.pause();
-      setPlayingId(null);
       return;
     }
     player.replace(note.uri);
     player.play();
-    setPlayingId(note.id);
+    setLastPlayedId(note.id);
   }
 
   return (
@@ -160,7 +175,7 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
           title={note.name}
           onPress={() => togglePlay(note)}
           left={(props) => (
-            <List.Icon {...props} icon={playingId === note.id && playerStatus.playing ? 'pause-circle' : 'play-circle'} />
+            <List.Icon {...props} icon={lastPlayedId === note.id && playerStatus.playing ? 'pause-circle' : 'play-circle'} />
           )}
           right={() => (
             <View style={{ flexDirection: 'row' }}>
@@ -175,7 +190,7 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
                 size={20}
                 iconColor={colors.error}
                 accessibilityLabel={`«${note.name}» löschen`}
-                onPress={() => remove(note.id)}
+                onPress={() => requestRemove(note.id)}
               />
             </View>
           )}
@@ -196,6 +211,17 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
           <Dialog.Actions>
             <Button onPress={() => setDialog(null)}>Abbrechen</Button>
             <Button onPress={confirmDialog}>Speichern</Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        <Dialog visible={!!confirmDeleteId} onDismiss={() => !saving && setConfirmDeleteId(null)}>
+          <Dialog.Title>Sprachnotiz löschen?</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">Du kannst das danach kurz rückgängig machen.</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setConfirmDeleteId(null)} disabled={saving}>Abbrechen</Button>
+            <Button textColor={colors.error} onPress={confirmRemove} loading={saving} disabled={saving}>Löschen</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

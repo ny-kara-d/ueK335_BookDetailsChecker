@@ -4,9 +4,15 @@ import { Text } from 'react-native-paper';
 import { Book } from '../api/client';
 import { COVER_COLORS } from '../theme';
 
+/** Leitet deterministisch eine Palettenfarbe aus einer Buch-ID ab (für Bücher ohne eigene coverColor). */
+function colorForId(id: Book['id']) {
+  const digits = Number(String(id).replace(/\D/g, '') || 0);
+  return COVER_COLORS[digits % COVER_COLORS.length];
+}
+
 // Eigene Komponente (kein Paper-Element): farbiges Cover mit Titel, wie in Figma
 export default function BookCover({ book, width = 60 }: { book: Pick<Book, 'title' | 'author' | 'coverColor' | 'id'>; width?: number }) {
-  const color = book.coverColor ?? COVER_COLORS[Number(String(book.id).replace(/\D/g, '') || 0) % COVER_COLORS.length];
+  const color = book.coverColor ?? colorForId(book.id);
   const scale = width / 100;
   return (
     <View style={[styles.cover, { width, backgroundColor: color, padding: 10 * scale, paddingLeft: 13 * scale }]}>
