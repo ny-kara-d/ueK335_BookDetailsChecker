@@ -2,7 +2,7 @@
 
 A mobile app for managing a book catalogue — built for üK Modul 335 ("Mobile-Applikation realisieren").
 
-Users register/log in, then browse, search and filter books by title and genre, and create, edit or delete book entries. Profile data (name, age) collected at registration is shown on the Profile screen; sessions are backed by a token-protected REST API.
+Users register/log in, then browse, search and filter books by title and genre, and create, edit or delete book entries. Profile data (name, age) collected at registration is shown on the Profile screen; sessions are backed by a token-protected REST API. On a book's detail screen, users can also record a short voice note about that book (a Kano-model "delighter" feature, not part of the MUSS/SOLL requirements).
 
 ## Tech stack
 
@@ -10,6 +10,7 @@ Users register/log in, then browse, search and filter books by title and genre, 
 - [React Native Paper](https://callstack.github.io/react-native-paper/) (Material Design 3 components)
 - TypeScript
 - [expo-secure-store](https://docs.expo.dev/versions/latest/sdk/securestore/) for the auth token and cached profile
+- [expo-audio](https://docs.expo.dev/versions/latest/sdk/audio/) for the microphone-based voice note recording/playback
 - Backend: [`rest-jsondb`](https://hub.docker.com/r/noseryoung/rest-jsondb) (json-server + json-server-auth) running in Docker
 
 ## Prerequisites
@@ -18,6 +19,7 @@ Users register/log in, then browse, search and filter books by title and genre, 
 - [Yarn](https://yarnpkg.com) (classic)
 - [Docker](https://www.docker.com/) (to run the backend)
 - Android Studio with a configured Virtual Device, **or** the [Expo Go](https://expo.dev/go) app on a physical phone on the same Wi-Fi as your laptop
+- **Code editor: [VS Code](https://code.visualstudio.com/)**, not Android Studio's own editor — Android Studio is used here only to run the emulator. Opening this project in Android Studio's editor has caused its file indexer to silently miss new/changed files (confirmed on this project); VS Code's TypeScript/React Native support doesn't have that problem.
 
 ## 1. Start the backend
 
@@ -46,11 +48,15 @@ Then either:
 
 No manual IP configuration is needed: [`src/api/client.ts`](src/api/client.ts) derives the backend's base URL automatically from `Constants.expoConfig.hostUri` (the same host Expo's dev server reports), so it works out of the box on both the emulator and a physical device, as long as the backend container is reachable on port `3030` from that device.
 
+The first time you record a voice note on a book's detail screen, the app will prompt for microphone access.
+
 ### Troubleshooting
 
 - **`npx expo start` fails to find the Android emulator**: make sure an AVD is running in Android Studio first (Device Manager → ▶), and that `ANDROID_HOME` is set.
 - **App can't reach the backend**: confirm `docker ps` shows `restdb` running, and that your phone/emulator is on the same network as the laptop (use `npx expo start --tunnel` if a firewall/guest Wi-Fi blocks the direct connection).
 - **Metro/dependency errors after pulling changes**: delete `node_modules` and `yarn.lock`, then re-run `yarn install`.
+- **Voice note recording produces silence on the Android emulator**: by default the AVD has no real microphone input. In the emulator window, open Extended Controls (the ⋮ menu) → **Microphone** → enable "Virtual microphone uses host audio input". A physical device via Expo Go avoids this entirely.
+- **Android Studio's editor shows stale/missing files** (e.g. a new file doesn't appear, Goto File can't find it): this is an indexing issue with Android Studio's project view for a non-Gradle folder, not a problem with the files themselves. Edit in VS Code instead (see Prerequisites); keep Android Studio open only for the emulator.
 
 ## Project structure
 
@@ -63,7 +69,7 @@ src/
     register.tsx
   api/client.ts     # REST calls, auth token handling, typed errors
   context/          # AuthContext (session), SnackbarContext (toasts)
-  components/       # reusable UI: BookRow, BookCover, ErrorBanner, StateView
+  components/       # reusable UI: BookRow, BookCover, ErrorBanner, StateView, VoiceNote
   hooks/useBooks.ts # book list loading/reload logic
   validation.ts     # form validation helpers
   theme.ts           # React Native Paper theme + cover color palette
