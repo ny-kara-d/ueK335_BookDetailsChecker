@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 import ErrorBanner from '../components/ErrorBanner';
+import { useTemporaryError } from '../hooks/useTemporaryError';
 import { isEmail } from '../validation';
 
 export default function LoginScreen() {
@@ -15,16 +16,25 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showErrors, setShowErrors] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useTemporaryError();
 
   const emailError = !isEmail(email) ? 'Bitte gib eine gültige E-Mail-Adresse ein.' : null;
   const passwordError = password === '' ? 'Bitte gib dein Passwort ein.' : null;
+  // Ausgefüllte E-Mail sofort prüfen, leere Felder erst nach dem Absenden melden
+  const showEmailError = !!emailError && (showErrors || email.trim() !== '');
+  const showPasswordError = showErrors && !!passwordError;
+
+  // Wer etwas ändert, hat die Meldung gelesen: Banner sofort ausblenden
+  const change = (setter: (value: string) => void) => (value: string) => {
+    setter(value);
+    setError(null);
+  };
 
   async function submit() {
     setShowErrors(true);
+    setError(null);
     if (emailError || passwordError) return;
     setLoading(true);
-    setError(null);
     try {
       await login(email.trim(), password); // KANN: danach automatisch auf Home (erster Tab)
     } catch (e) {
@@ -50,26 +60,26 @@ export default function LoginScreen() {
               mode="outlined"
               label="E-Mail"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={change(setEmail)}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
-              error={showErrors && !!emailError}
+              error={showEmailError}
               disabled={loading}
               style={{ marginTop: error ? 12 : 0 }}
             />
-            <HelperText type="error" visible={showErrors && !!emailError}>{emailError}</HelperText>
+            <HelperText type="error" visible={showEmailError}>{emailError}</HelperText>
             <TextInput
               mode="outlined"
               label="Passwort"
               value={password}
-              onChangeText={setPassword}
+              onChangeText={change(setPassword)}
               secureTextEntry
-              error={showErrors && !!passwordError}
+              error={showPasswordError}
               disabled={loading}
               onSubmitEditing={submit}
             />
-            <HelperText type="error" visible={showErrors && !!passwordError}>{passwordError}</HelperText>
+            <HelperText type="error" visible={showPasswordError}>{passwordError}</HelperText>
           </View>
         </ScrollView>
         {/* Hauptaktion unten in der Daumenzone */}

@@ -1,6 +1,6 @@
 // Von Claude generiert (KI-Einsatz, siehe Technischer Bericht)
 import { useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { FlatList, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Chip, FAB, Searchbar, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -11,7 +11,7 @@ import StateView from '../../components/StateView';
 export default function BooksScreen() {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
-  const { books, loading, error, retry } = useBooks();
+  const { books, loading, error, refreshing, refresh, retry } = useBooks();
   const [query, setQuery] = useState('');
   const [genre, setGenre] = useState<string | null>(null);
 
@@ -55,6 +55,7 @@ export default function BooksScreen() {
         columnWrapperStyle={columns > 1 ? { gap: 24 } : undefined}
         renderItem={({ item }) => <View style={{ flex: 1 }}><BookRow book={item} /></View>}
         contentContainerStyle={{ paddingBottom: 96 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} colors={[colors.primary]} tintColor={colors.primary} />}
       />
     );
   }
