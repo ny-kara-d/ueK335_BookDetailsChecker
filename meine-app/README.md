@@ -48,7 +48,7 @@ Then either:
 
 No manual IP configuration is needed: [`src/api/client.ts`](src/api/client.ts) derives the backend's base URL automatically from `Constants.expoConfig.hostUri` (the same host Expo's dev server reports), so it works out of the box on both the emulator and a physical device, as long as the backend container is reachable on port `3030` from that device.
 
-The first time you record a voice note on a book's detail screen, the app will prompt for microphone access. Each recording is named right after stopping; names can be changed later via the pencil icon.
+The first time you record a voice note on a book's detail screen, the app will prompt for microphone access. Each recording is named right after stopping; names can be changed later via the pencil icon. If microphone access is denied, the OS won't show that prompt again — the app detects this and shows an "Einstellungen öffnen" button that links directly to the device's app settings instead of a dead end. Each voice note's audio file is a local path on the device it was recorded on, so playback isn't available on other devices.
 
 ### Troubleshooting
 
