@@ -1,9 +1,6 @@
 // Von Claude generiert (KI-Einsatz, siehe Technischer Bericht)
 // Begeisterungsmerkmal nach Kano-Modell: nicht Teil der MUSS/SOLL-Anforderungen,
 // nutzt aber das Mikrofon als Sensor (Kurs-Handlungsziel "Sensor einbinden").
-import { useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
-import { Button, Text, useTheme } from 'react-native-paper';
 import {
   AudioModule,
   RecordingPresets,
@@ -11,8 +8,11 @@ import {
   useAudioPlayer,
   useAudioRecorder,
   useAudioRecorderState,
-} from 'expo-audio';
-import { Book, updateBook } from '../api/client';
+} from "expo-audio";
+import { useEffect, useMemo, useState } from "react";
+import { Animated, StyleSheet, View } from "react-native";
+import { Button, Text, useTheme } from "react-native-paper";
+import { Book, updateBook } from "../api/client";
 
 // Realistischer dB-Bereich für Mikrofonpegel: leise (-60) bis sehr laut (0)
 const MIN_DB = -60;
@@ -25,7 +25,7 @@ function normalize(db: number | undefined) {
 }
 
 type Props = {
-  bookId: Book['id'];
+  bookId: Book["id"];
   voiceNoteUri?: string;
   onSaved: (uri: string) => void;
 };
@@ -43,11 +43,16 @@ export default function VoiceNote({ bookId, voiceNoteUri, onSaved }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
+  const recorder = useAudioRecorder({
+    ...RecordingPresets.HIGH_QUALITY,
+    isMeteringEnabled: true,
+  });
   const recorderState = useAudioRecorderState(recorder, 100); // Pegel alle 100ms
   const player = useAudioPlayer(voiceNoteUri);
 
-  const scale = useRef(new Animated.Value(1)).current;
+  // useMemo statt useRef: kein Ref-Objekt, daher kein .current-Lesen beim Rendern –
+  // der React Compiler (app.json: reactCompiler) beanstandet das sonst.
+  const scale = useMemo(() => new Animated.Value(1), []);
 
   useEffect(() => {
     setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
@@ -55,14 +60,21 @@ export default function VoiceNote({ bookId, voiceNoteUri, onSaved }: Props) {
 
   useEffect(() => {
     const level = normalize(recorderState.metering);
-    Animated.spring(scale, { toValue: 1 + level * 0.6, useNativeDriver: true, speed: 20, bounciness: 4 }).start();
+    Animated.spring(scale, {
+      toValue: 1 + level * 0.6,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 4,
+    }).start();
   }, [recorderState.metering, scale]);
 
   async function start() {
     setError(null);
     const status = await AudioModule.requestRecordingPermissionsAsync();
     if (!status.granted) {
-      setError('Ohne Mikrofon-Zugriff kann keine Sprachnotiz aufgenommen werden.');
+      setError(
+        "Ohne Mikrofon-Zugriff kann keine Sprachnotiz aufgenommen werden.",
+      );
       return;
     }
     await recorder.prepareToRecordAsync();
@@ -92,18 +104,32 @@ export default function VoiceNote({ bookId, voiceNoteUri, onSaved }: Props) {
         <Animated.View
           style={[
             styles.dot,
-            { backgroundColor: recorderState.isRecording ? colors.error : colors.primary, transform: [{ scale }] },
+            {
+              backgroundColor: recorderState.isRecording
+                ? colors.error
+                : colors.primary,
+              transform: [{ scale }],
+            },
           ]}
         />
         {!recorderState.isRecording ? (
-          <Button mode="outlined" onPress={start} loading={saving} disabled={saving}>
-            {voiceNoteUri ? 'Neu aufnehmen' : 'Aufnehmen'}
+          <Button
+            mode="outlined"
+            onPress={start}
+            loading={saving}
+            disabled={saving}
+          >
+            {voiceNoteUri ? "Neu aufnehmen" : "Aufnehmen"}
           </Button>
         ) : (
-          <Button mode="contained" buttonColor={colors.error} onPress={stop}>Stop</Button>
+          <Button mode="contained" buttonColor={colors.error} onPress={stop}>
+            Stop
+          </Button>
         )}
         {voiceNoteUri && !recorderState.isRecording && (
-          <Button mode="text" onPress={() => player.play()}>Abspielen</Button>
+          <Button mode="text" onPress={() => player.play()}>
+            Abspielen
+          </Button>
         )}
       </View>
     </View>
@@ -111,6 +137,6 @@ export default function VoiceNote({ bookId, voiceNoteUri, onSaved }: Props) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  row: { flexDirection: "row", alignItems: "center", gap: 12 },
   dot: { width: 14, height: 14, borderRadius: 7 },
 });
