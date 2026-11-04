@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "meine-app",
-    "slug": "meine-app",
+    "name": "BookCrux",
+    "slug": "bookcrux",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
