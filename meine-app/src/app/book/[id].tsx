@@ -7,7 +7,7 @@ import { Book, createBook, deleteBook, getBook } from '../../api/client';
 import { useSnackbar } from '../../context/SnackbarContext';
 import BookCover from '../../components/BookCover';
 import StateView from '../../components/StateView';
-import VoiceNote from '../../components/VoiceNote';
+import VoiceNotes from '../../components/VoiceNotes';
 import { COVER_COLORS } from '../../theme';
 
 export default function BookDetailScreen() {
@@ -96,10 +96,10 @@ export default function BookDetailScreen() {
               <Text variant="bodyMedium" style={{ color: colors.onSurfaceVariant }}>{book.description}</Text>
             </View>
           )}
-          <VoiceNote
+          <VoiceNotes
             bookId={book.id}
-            voiceNoteUri={book.voiceNoteUri}
-            onSaved={(uri) => setBook({ ...book, voiceNoteUri: uri })}
+            voiceNotes={book.voiceNotes ?? []}
+            onChange={(notes) => setBook({ ...book, voiceNotes: notes })}
           />
         </View>
       </ScrollView>

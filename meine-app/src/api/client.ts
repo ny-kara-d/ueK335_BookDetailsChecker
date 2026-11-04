@@ -9,6 +9,14 @@ import * as SecureStore from 'expo-secure-store';
 const host = Constants.expoConfig?.hostUri?.split(':')[0] ?? 'localhost';
 const BASE_URL = `http://${host}:3030`;
 
+/** Eine benannte Sprachnotiz. `uri` ist ein lokaler Dateipfad, nur auf diesem Gerät gültig. */
+export type VoiceNote = {
+  id: string;
+  name: string;
+  uri: string;
+  createdAt: string;
+};
+
 export type Book = {
   id: number | string;
   title: string;
@@ -19,8 +27,8 @@ export type Book = {
   description?: string;
   coverColor?: string;
   rating?: number;
-  /** Lokaler Dateipfad der Sprachnotiz (Begeisterungsmerkmal, nur auf diesem Gerät gültig). */
-  voiceNoteUri?: string;
+  /** Sprachnotizen (Begeisterungsmerkmal, siehe VoiceNotes-Komponente). */
+  voiceNotes?: VoiceNote[];
 };
 
 // Feste Auswahl statt Freitext: verhindert Schreibvarianten wie «roman» / «Roman» im Genre-Filter
