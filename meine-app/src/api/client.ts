@@ -19,6 +19,8 @@ export type Book = {
   description?: string;
   coverColor?: string;
   rating?: number;
+  /** Lokaler Dateipfad der Sprachnotiz (Begeisterungsmerkmal, nur auf diesem Gerät gültig). */
+  voiceNoteUri?: string;
 };
 
 export type User = { email: string; firstname?: string; lastname?: string; age?: number };

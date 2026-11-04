@@ -37,7 +37,13 @@
       "expo-image",
       "expo-status-bar",
       "expo-web-browser",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Erlaube BookCrux den Zugriff auf das Mikrofon, um Sprachnotizen zu Büchern aufzunehmen."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
