@@ -3,7 +3,7 @@
 // nicht Teil der MUSS/SOLL-Anforderungen. Nutzt das Mikrofon als Sensor
 // (Kurs-Handlungsziel "Sensor einbinden").
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, Linking, StyleSheet, View } from 'react-native';
 import { Button, Dialog, IconButton, List, Portal, Text, TextInput, useTheme } from 'react-native-paper';
 import {
   AudioModule,
@@ -51,6 +51,10 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
   const { colors } = useTheme();
   const showSnack = useSnackbar();
   const [error, setError] = useState<string | null>(null);
+  // Separat von "error", weil der Fehlertext hier einen Handlungshinweis braucht (Fehlertoleranz
+  // nach ISO 9241-110): die Berechtigung lässt sich nicht erneut per Tippen anfragen, sobald sie
+  // einmal verweigert wurde – nur noch über die Geräte-Einstellungen.
+  const [permissionDenied, setPermissionDenied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dialog, setDialog] = useState<NameDialog>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -90,9 +94,11 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
 
   async function startRecording() {
     setError(null);
+    setPermissionDenied(false);
     const status = await AudioModule.requestRecordingPermissionsAsync();
     if (!status.granted) {
       setError('Ohne Mikrofon-Zugriff kann keine Sprachnotiz aufgenommen werden.');
+      setPermissionDenied(true);
       return;
     }
     await recorder.prepareToRecordAsync();
@@ -159,7 +165,16 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
         )}
       </View>
 
-      {error && <Text style={{ color: colors.error }}>{error}</Text>}
+      {error && (
+        <View style={{ gap: 2, alignItems: 'flex-start' }}>
+          <Text style={{ color: colors.error }}>{error}</Text>
+          {permissionDenied && (
+            <Button mode="text" compact onPress={() => Linking.openSettings()} style={{ marginLeft: -12 }}>
+              Einstellungen öffnen
+            </Button>
+          )}
+        </View>
+      )}
 
       {recorderState.isRecording && (
         <Animated.View style={[styles.dot, { backgroundColor: colors.error, transform: [{ scale }] }]} />

@@ -2,7 +2,7 @@
 
 A mobile app for managing a book catalogue — built for üK Modul 335 ("Mobile-Applikation realisieren").
 
-Users register/log in, then browse, search and filter books by title and genre, and create, edit or delete book entries. Profile data (name, age) collected at registration is shown on the Profile screen; sessions are backed by a token-protected REST API. On a book's detail screen, users can also record a short voice note about that book (a Kano-model "delighter" feature, not part of the MUSS/SOLL requirements).
+Users register/log in, then browse, search and filter books by title and genre, and create, edit or delete book entries. Profile data (name, age) collected at registration is shown on the Profile screen; sessions are backed by a token-protected REST API. On a book's detail screen, users can also record, name, rename and delete multiple voice notes about that book (a Kano-model "delighter" feature, not part of the MUSS/SOLL requirements).
 
 ## Tech stack
 
@@ -48,7 +48,7 @@ Then either:
 
 No manual IP configuration is needed: [`src/api/client.ts`](src/api/client.ts) derives the backend's base URL automatically from `Constants.expoConfig.hostUri` (the same host Expo's dev server reports), so it works out of the box on both the emulator and a physical device, as long as the backend container is reachable on port `3030` from that device.
 
-The first time you record a voice note on a book's detail screen, the app will prompt for microphone access.
+The first time you record a voice note on a book's detail screen, the app will prompt for microphone access. Each recording is named right after stopping; names can be changed later via the pencil icon.
 
 ### Troubleshooting
 
@@ -69,7 +69,7 @@ src/
     register.tsx
   api/client.ts     # REST calls, auth token handling, typed errors
   context/          # AuthContext (session), SnackbarContext (toasts)
-  components/       # reusable UI: BookRow, BookCover, ErrorBanner, StateView, VoiceNote
+  components/       # reusable UI: BookRow, BookCover, ErrorBanner, StateView, VoiceNotes
   hooks/useBooks.ts # book list loading/reload logic
   validation.ts     # form validation helpers
   theme.ts           # React Native Paper theme + cover color palette

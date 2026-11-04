@@ -37,7 +37,7 @@ export default function BookDetailScreen() {
     } catch (e) {
       setDeleting(false);
       setConfirm(false);
-      showSnack((e as Error).message);
+      showSnack((e as Error).message, { label: 'Erneut versuchen', onPress: remove });
     }
   }
 

@@ -101,7 +101,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (response.status === 401 || response.status === 403) {
     throw new AuthError('Bitte erneut anmelden.');
   }
-  if (!response.ok) throw new Error(`Fehler vom Server (${response.status}). Versuche es erneut.`);
+  if (!response.ok) {
+    // Statuscode nur fürs Debugging loggen: Nutzende sollen laut ISO 9241-110 (Fehlertoleranz)
+    // und Nielsen-Heuristik 9 eine Meldung in Klartext sehen, keinen rohen Fehlercode.
+    console.error(`Serverfehler bei ${path}: HTTP ${response.status}`);
+    throw new Error('Unerwarteter Serverfehler. Versuche es erneut.');
+  }
   return response.json() as Promise<T>;
 }
 
