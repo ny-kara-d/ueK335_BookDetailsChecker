@@ -22,6 +22,61 @@ export default function HomeScreen() {
   const top = [...rated].sort((a, b) => Number(b.rating) - Number(a.rating)).slice(0, 3);
   const today = new Date().toLocaleDateString('de-CH', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
 
+  let content;
+  if (loading) {
+    content = <ActivityIndicator style={{ marginTop: 32 }} accessibilityLabel="Bücher werden geladen" />;
+  } else if (error) {
+    content = <StateView icon="wifi-off" title="Keine Verbindung" text={error} action="Erneut versuchen" onPress={retry} />;
+  } else {
+    content = (
+      <>
+        <View style={styles.stats}>
+          {[[books.length, 'Bücher'], [genres, 'Genres'], [avg, '⌀ Bewertung']].map(([n, label]) => (
+            <View key={label} style={[styles.stat, { backgroundColor: colors.surfaceVariant }]}>
+              <Text variant="headlineSmall">{n}</Text>
+              <Text variant="bodySmall" style={{ color: colors.onSurfaceVariant }}>{label}</Text>
+            </View>
+          ))}
+        </View>
+
+        {newest.length > 0 && (
+          <View style={{ gap: 8 }}>
+            <View style={styles.sectionHead}>
+              <Text variant="titleLarge">Neu im Katalog</Text>
+              <Button mode="text" onPress={() => router.navigate('/books')}>Alle anzeigen</Button>
+            </View>
+            <FlatList
+              horizontal
+              data={newest}
+              keyExtractor={(b) => String(b.id)}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 14 }}
+              renderItem={({ item }) => (
+                <Pressable onPress={() => router.push(`/book/${item.id}`)} style={{ width: 110, gap: 2 }}>
+                  <BookCover book={item} width={110} />
+                  <Text variant="titleSmall" numberOfLines={1} style={{ marginTop: 6 }}>{item.title}</Text>
+                  <Text variant="bodySmall" numberOfLines={1} style={{ color: colors.onSurfaceVariant }}>{item.author}</Text>
+                </Pressable>
+              )}
+            />
+          </View>
+        )}
+
+        {top.length > 0 && (
+          <View>
+            <Text variant="titleLarge">Top bewertet</Text>
+            {top.map((b, i) => (
+              <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Text variant="titleLarge" style={{ color: colors.primary, width: 18 }}>{i + 1}</Text>
+                <View style={{ flex: 1 }}><BookRow book={b} /></View>
+              </View>
+            ))}
+          </View>
+        )}
+      </>
+    );
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -47,57 +102,7 @@ export default function HomeScreen() {
           </Card.Content>
         </Card>
 
-        {loading ? (
-          <ActivityIndicator style={{ marginTop: 32 }} accessibilityLabel="Bücher werden geladen" />
-        ) : error ? (
-          <StateView icon="wifi-off" title="Keine Verbindung" text={error} action="Erneut versuchen" onPress={retry} />
-        ) : (
-          <>
-            <View style={styles.stats}>
-              {[[books.length, 'Bücher'], [genres, 'Genres'], [avg, '⌀ Bewertung']].map(([n, label]) => (
-                <View key={label} style={[styles.stat, { backgroundColor: colors.surfaceVariant }]}>
-                  <Text variant="headlineSmall">{n}</Text>
-                  <Text variant="bodySmall" style={{ color: colors.onSurfaceVariant }}>{label}</Text>
-                </View>
-              ))}
-            </View>
-
-            {newest.length > 0 && (
-              <View style={{ gap: 8 }}>
-                <View style={styles.sectionHead}>
-                  <Text variant="titleLarge">Neu im Katalog</Text>
-                  <Button mode="text" onPress={() => router.navigate('/books')}>Alle anzeigen</Button>
-                </View>
-                <FlatList
-                  horizontal
-                  data={newest}
-                  keyExtractor={(b) => String(b.id)}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 14 }}
-                  renderItem={({ item }) => (
-                    <Pressable onPress={() => router.push(`/book/${item.id}`)} style={{ width: 110, gap: 2 }}>
-                      <BookCover book={item} width={110} />
-                      <Text variant="titleSmall" numberOfLines={1} style={{ marginTop: 6 }}>{item.title}</Text>
-                      <Text variant="bodySmall" numberOfLines={1} style={{ color: colors.onSurfaceVariant }}>{item.author}</Text>
-                    </Pressable>
-                  )}
-                />
-              </View>
-            )}
-
-            {top.length > 0 && (
-              <View>
-                <Text variant="titleLarge">Top bewertet</Text>
-                {top.map((b, i) => (
-                  <View key={b.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <Text variant="titleLarge" style={{ color: colors.primary, width: 18 }}>{i + 1}</Text>
-                    <View style={{ flex: 1 }}><BookRow book={b} /></View>
-                  </View>
-                ))}
-              </View>
-            )}
-          </>
-        )}
+        {content}
       </ScrollView>
     </SafeAreaView>
   );
