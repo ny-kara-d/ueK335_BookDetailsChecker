@@ -41,9 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // useCallback: useBooks hängt davon ab, sonst lädt die Liste endlos neu
   const logout = useCallback(async () => {
-    await SecureStore.deleteItemAsync('token');
-    await SecureStore.deleteItemAsync('user');
-    setUser(null);
+    try {
+      await SecureStore.deleteItemAsync('token');
+      await SecureStore.deleteItemAsync('user');
+    } catch {
+      // Keystore-Fehler beim Löschen: trotzdem lokal ausloggen
+    } finally {
+      setUser(null);
+    }
   }, []);
 
   return (
