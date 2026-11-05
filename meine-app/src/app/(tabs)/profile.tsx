@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar, Button, Dialog, List, Portal, Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
+import { getInitials } from '../../utils';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -12,7 +13,7 @@ export default function ProfileScreen() {
   if (!user) return null;
 
   const name = [user.firstname, user.lastname].filter(Boolean).join(' ');
-  const initials = ((user.firstname?.[0] ?? '') + (user.lastname?.[0] ?? '')).toUpperCase() || user.email[0].toUpperCase();
+  const initials = getInitials(user);
   const rows: [string, string, string | number | undefined][] = [
     ['account-outline', 'Vorname', user.firstname],
     ['account-outline', 'Nachname', user.lastname],

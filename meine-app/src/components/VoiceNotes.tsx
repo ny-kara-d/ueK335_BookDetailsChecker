@@ -95,14 +95,18 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
   async function startRecording() {
     setError(null);
     setPermissionDenied(false);
-    const status = await AudioModule.requestRecordingPermissionsAsync();
-    if (!status.granted) {
-      setError('Ohne Mikrofon-Zugriff kann keine Sprachnotiz aufgenommen werden.');
-      setPermissionDenied(true);
-      return;
+    try {
+      const status = await AudioModule.requestRecordingPermissionsAsync();
+      if (!status.granted) {
+        setError('Ohne Mikrofon-Zugriff kann keine Sprachnotiz aufgenommen werden.');
+        setPermissionDenied(true);
+        return;
+      }
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+    } catch (e) {
+      setError((e as Error).message);
     }
-    await recorder.prepareToRecordAsync();
-    recorder.record();
   }
 
   async function stopRecording() {

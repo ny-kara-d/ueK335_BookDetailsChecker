@@ -8,13 +8,14 @@ import { useBooks } from '../../hooks/useBooks';
 import BookCover from '../../components/BookCover';
 import BookRow from '../../components/BookRow';
 import StateView from '../../components/StateView';
+import { getInitials } from '../../utils';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
   const { books, loading, error, retry } = useBooks();
 
-  const initials = ((user?.firstname?.[0] ?? '') + (user?.lastname?.[0] ?? '')).toUpperCase() || user?.email[0].toUpperCase() || '?';
+  const initials = getInitials(user);
   const rated = books.filter((b) => b.rating != null);
   const avg = rated.length ? (rated.reduce((sum, b) => sum + Number(b.rating), 0) / rated.length).toFixed(1).replace('.', ',') : '–';
   const genres = new Set(books.map((b) => b.genre).filter(Boolean)).size;

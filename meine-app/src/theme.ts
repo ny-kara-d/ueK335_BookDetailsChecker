@@ -35,3 +35,9 @@ export const theme = {
 };
 
 export const COVER_COLORS = ['#2F6B4F', '#2B4C7E', '#A23B2A', '#9C6A14', '#5B3F7A', '#1F6F78'];
+
+// Gemeinsamer Fuss für Login/Registrieren: Hauptaktion + Wechsel-Link, identisch auf beiden Screens
+export const AUTH_FOOTER_STYLES = {
+  bottom: { paddingHorizontal: 16, paddingTop: 12 },
+  link: { flexDirection: 'row' as const, justifyContent: 'center' as const, alignItems: 'center' as const, minHeight: 48 },
+};

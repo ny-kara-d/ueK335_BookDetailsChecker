@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import ErrorBanner from '../components/ErrorBanner';
 import { useTemporaryError } from '../hooks/useTemporaryError';
 import { isEmail, isOptionalNumber, MIN_PASSWORD } from '../validation';
+import { AUTH_FOOTER_STYLES } from '../theme';
 
 export default function RegisterScreen() {
   const { register } = useAuth();
@@ -94,6 +95,5 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   content: { padding: 16, paddingTop: 4 },
   row: { flexDirection: 'row', gap: 12 },
-  bottom: { paddingHorizontal: 16, paddingTop: 12 },
-  link: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', minHeight: 48 },
+  ...AUTH_FOOTER_STYLES,
 });
