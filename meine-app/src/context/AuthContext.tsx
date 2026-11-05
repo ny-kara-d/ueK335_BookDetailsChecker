@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
         const token = await SecureStore.getItemAsync('token');
         const saved = await SecureStore.getItemAsync('user');
