@@ -18,11 +18,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    SecureStore.getItemAsync('token').then(async (token) => {
-      const saved = await SecureStore.getItemAsync('user');
-      if (token && saved) setUser(JSON.parse(saved));
-      setLoading(false);
-    });
+    (async () => {
+      try {
+        const token = await SecureStore.getItemAsync('token');
+        const saved = await SecureStore.getItemAsync('user');
+        if (token && saved) setUser(JSON.parse(saved));
+      } catch {
+        // beschädigte oder fehlende Daten: einfach ausgeloggt starten
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   async function login(email: string, password: string) {
