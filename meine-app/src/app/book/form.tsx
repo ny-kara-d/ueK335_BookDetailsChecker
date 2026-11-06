@@ -4,7 +4,8 @@ import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View
 import { ActivityIndicator, Appbar, Button, HelperText, Menu, TextInput, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { createBook, GENRES, getBook, updateBook } from '../../api/client';
+import { AuthError, createBook, GENRES, getBook, updateBook } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 import { useSnackbar } from '../../context/SnackbarContext';
 import ErrorBanner from '../../components/ErrorBanner';
 import { isOptionalNumber } from '../../validation';
@@ -14,9 +15,14 @@ const GENRE_LIST_HEIGHT = 48 * 4.5;
 
 const EMPTY = { title: '', author: '', genre: '', year: '', pages: '', description: '' };
 
+/**
+ * Formular zum Anlegen oder Bearbeiten eines Buchs. Ohne `id`-Parameter: neues Buch mit
+ * leeren Feldern; mit `id`: lädt die bestehenden Daten und speichert über `updateBook`.
+ */
 export default function BookFormScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { colors, roundness } = useTheme();
+  const { logout } = useAuth();
   const showSnack = useSnackbar();
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(!!id);
@@ -35,9 +41,9 @@ export default function BookFormScreen() {
         year: b.year != null ? String(b.year) : '', pages: b.pages != null ? String(b.pages) : '',
         description: b.description ?? '',
       }))
-      .catch((e) => setError(e.message))
+      .catch((e) => (e instanceof AuthError ? logout() : setError(e.message)))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, logout]);
 
   const errors = {
     title: form.title.trim() ? null : 'Bitte gib einen Titel ein.',
@@ -49,6 +55,7 @@ export default function BookFormScreen() {
   const errorCount = Object.values(errors).filter(Boolean).length;
   const show = (key: keyof typeof errors) => showErrors && !!errors[key];
 
+  /** Validiert und speichert das Formular; legt bei fehlender `id` ein neues Buch an. */
   async function save() {
     setShowErrors(true);
     if (errorCount) return;
@@ -68,6 +75,7 @@ export default function BookFormScreen() {
       router.back();
       showSnack(id ? 'Änderungen gespeichert' : `«${book.title}» wurde hinzugefügt`);
     } catch (e) {
+      if (e instanceof AuthError) return logout();
       setError(`Speichern fehlgeschlagen: ${(e as Error).message}`);
       setSaving(false);
     }

@@ -10,7 +10,12 @@ function colorForId(id: Book['id']) {
   return COVER_COLORS[digits % COVER_COLORS.length];
 }
 
-// Eigene Komponente (kein Paper-Element): farbiges Cover mit Titel, wie in Figma
+/**
+ * Zeigt ein Buch als farbiges Cover mit Titel und Autor:in (eigene Komponente, kein Paper-Element,
+ * wie im Figma-Mockup entworfen).
+ * @param book Buchdaten (nur die für das Cover nötigen Felder)
+ * @param width Breite in dp; Höhe ergibt sich aus dem festen Seitenverhältnis 2:3
+ */
 export default function BookCover({ book, width = 60 }: { book: Pick<Book, 'title' | 'author' | 'coverColor' | 'id'>; width?: number }) {
   const color = book.coverColor ?? colorForId(book.id);
   const scale = width / 100;

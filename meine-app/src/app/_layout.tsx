@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import { SnackbarProvider } from '../context/SnackbarContext';
 import { theme } from '../theme';
 
+/** Wechselt anhand des Login-Status zwischen Login/Registrieren und den geschützten App-Screens. */
 function RootStack() {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -27,6 +28,7 @@ function RootStack() {
   );
 }
 
+/** Wurzel-Layout: hängt Theme, Auth- und Snackbar-Provider über die gesamte App. */
 export default function RootLayout() {
   return (
     <PaperProvider theme={theme}>

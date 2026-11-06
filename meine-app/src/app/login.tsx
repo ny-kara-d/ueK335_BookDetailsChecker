@@ -9,6 +9,7 @@ import ErrorBanner from '../components/ErrorBanner';
 import { useTemporaryError } from '../hooks/useTemporaryError';
 import { isEmail } from '../validation';
 
+/** Anmeldescreen: E-Mail/Passwort validieren und über `useAuth().login` einloggen. */
 export default function LoginScreen() {
   const { login } = useAuth();
   const { colors } = useTheme();

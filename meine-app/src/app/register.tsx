@@ -9,6 +9,7 @@ import ErrorBanner from '../components/ErrorBanner';
 import { useTemporaryError } from '../hooks/useTemporaryError';
 import { isEmail, isOptionalNumber, MIN_PASSWORD } from '../validation';
 
+/** Registrierungsscreen: nur E-Mail/Passwort sind Pflicht, Profilangaben sind optional. */
 export default function RegisterScreen() {
   const { register } = useAuth();
   const { colors } = useTheme();

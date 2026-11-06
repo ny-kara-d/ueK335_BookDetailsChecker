@@ -2,6 +2,7 @@
 // Farben 1:1 aus Figma (Variablen «Paper Theme»)
 import { MD3LightTheme } from 'react-native-paper';
 
+/** App-weites Material-Design-3-Theme für `PaperProvider`, Farben aus dem Figma-Mockup übernommen. */
 export const theme = {
   ...MD3LightTheme,
   colors: {
@@ -34,4 +35,5 @@ export const theme = {
   },
 };
 
+/** Feste Palette für Buch-Cover ohne eigene `coverColor` (siehe `BookCover.tsx`). */
 export const COVER_COLORS = ['#2F6B4F', '#2B4C7E', '#A23B2A', '#9C6A14', '#5B3F7A', '#1F6F78'];

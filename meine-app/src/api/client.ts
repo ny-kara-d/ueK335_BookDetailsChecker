@@ -82,9 +82,20 @@ async function auth(path: string, body: object, fallback: string): Promise<User>
   return profile;
 }
 
+/**
+ * Meldet an bestehendem Konto an.
+ * @param email E-Mail-Adresse des Kontos
+ * @param password Passwort im Klartext (geht nur über HTTPS/lokales Netz, wird nie gespeichert)
+ * @returns Profil der angemeldeten Person
+ */
 export const login = (email: string, password: string) =>
   auth('/login', { email, password }, 'E-Mail oder Passwort ist falsch. Prüfe deine Eingaben und versuche es erneut.');
 
+/**
+ * Legt ein neues Konto an.
+ * @param user Pflichtfelder email/password plus optionale Profilangaben (Vorname, Nachname, Alter)
+ * @returns Profil der neu angelegten Person
+ */
 export const register = (user: User & { password: string }) =>
   auth('/register', user, 'Registrierung fehlgeschlagen. Versuche es erneut.');
 
@@ -125,11 +136,28 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+/** Lädt den gesamten Buchkatalog. */
 export const getBooks = () => request<Book[]>('/books');
+
+/** Lädt ein einzelnes Buch anhand seiner ID. */
 export const getBook = (id: string) => request<Book>(`/books/${id}`);
+
+/**
+ * Legt ein neues Buch im Katalog an.
+ * @param book Buchdaten ohne `id` (wird vom Backend vergeben)
+ * @returns das angelegte Buch inkl. der neuen `id`
+ */
 export const createBook = (book: Omit<Book, 'id'> & { id?: Book['id'] }) =>
   request<Book>('/books', { method: 'POST', body: JSON.stringify(book) });
+
+/**
+ * Aktualisiert einzelne Felder eines Buchs (z. B. nach dem Bearbeiten oder bei neuen Sprachnotizen).
+ * @param id ID des zu ändernden Buchs
+ * @param changes nur die zu ändernden Felder, der Rest bleibt unverändert (PATCH)
+ */
 export const updateBook = (id: Book['id'], changes: Partial<Book>) =>
   request<Book>(`/books/${id}`, { method: 'PATCH', body: JSON.stringify(changes) });
+
+/** Löscht ein Buch endgültig aus dem Katalog. */
 export const deleteBook = (id: Book['id']) =>
   request<void>(`/books/${id}`, { method: 'DELETE' });

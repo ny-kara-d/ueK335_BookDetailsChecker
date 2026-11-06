@@ -8,6 +8,7 @@ import { useBooks } from '../../hooks/useBooks';
 import BookRow from '../../components/BookRow';
 import StateView from '../../components/StateView';
 
+/** Bücherliste mit Suche und Genre-Filter; 1 oder 2 Spalten je nach Bildschirmbreite. */
 export default function BooksScreen() {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();

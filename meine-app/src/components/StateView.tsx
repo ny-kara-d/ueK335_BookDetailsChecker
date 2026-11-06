@@ -5,6 +5,17 @@ import { Avatar, Button, Text, useTheme } from 'react-native-paper';
 // Leer-, Fehler- und Keine-Treffer-Zustand: was ist passiert + nächster Schritt
 type Props = { icon: string; title: string; text: string; action: string; onPress: () => void; mode?: 'contained' | 'outlined'; highlight?: boolean };
 
+/**
+ * Einheitlicher Platzhalter für Leer-, Fehler- und Keine-Treffer-Zustände: Icon, Titel,
+ * Beschreibung und ein Aktions-Button statt vier Mal denselben Aufbau zu duplizieren.
+ * @param icon Material-Icon-Name
+ * @param title kurze Überschrift (z. B. "Keine Verbindung")
+ * @param text Beschreibung, was passiert ist
+ * @param action Beschriftung des Buttons (z. B. "Erneut versuchen")
+ * @param onPress Aktion beim Tippen auf den Button
+ * @param mode Button-Stil, Standard `'contained'`
+ * @param highlight hebt das Icon farblich hervor (z. B. für "Noch keine Bücher")
+ */
 export default function StateView({ icon, title, text, action, onPress, mode = 'contained', highlight }: Props) {
   const { colors } = useTheme();
   return (

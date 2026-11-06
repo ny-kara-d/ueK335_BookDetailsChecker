@@ -2,6 +2,11 @@
 import { View } from 'react-native';
 import { Icon, Text, useTheme } from 'react-native-paper';
 
+/**
+ * Auffälliger Fehlerhinweis in einem Formular (z. B. Validierungs- oder Serverfehler beim Speichern).
+ * @param title optionale Überschrift, z. B. "Anmeldung fehlgeschlagen"
+ * @param text verständliche Fehlermeldung für Nutzende
+ */
 export default function ErrorBanner({ title, text }: { title?: string; text: string }) {
   const { colors } = useTheme();
   return (

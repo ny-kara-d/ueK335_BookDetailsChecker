@@ -9,6 +9,7 @@ import BookCover from '../../components/BookCover';
 import BookRow from '../../components/BookRow';
 import StateView from '../../components/StateView';
 
+/** Home-Screen: Statistik-Übersicht, neuste Bücher und Top-bewertete Bücher. */
 export default function HomeScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();

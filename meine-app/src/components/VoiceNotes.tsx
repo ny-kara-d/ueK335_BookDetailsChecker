@@ -14,19 +14,26 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from 'expo-audio';
-import { Book, VoiceNote, updateBook } from '../api/client';
+import { AuthError, Book, VoiceNote, updateBook } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { useSnackbar } from '../context/SnackbarContext';
 
 // Realistischer dB-Bereich für Mikrofonpegel: leise (-60) bis sehr laut (0)
 const MIN_DB = -60;
 const MAX_DB = 0;
 
+/**
+ * Normiert einen dB-Pegel auf 0..1 für die Pulsier-Animation.
+ * @param db Mikrofonpegel aus `recorderState.metering`, `undefined` solange nichts gemessen wurde
+ * @returns 0 (still/kein Wert) bis 1 (MAX_DB erreicht)
+ */
 function normalize(db: number | undefined) {
   if (db == null) return 0;
   const clamped = Math.max(MIN_DB, Math.min(MAX_DB, db));
   return (clamped - MIN_DB) / (MAX_DB - MIN_DB);
 }
 
+/** Erzeugt eine client-seitige ID für eine neue Sprachnotiz (Zeitstempel + Zufallsanteil). */
 function makeId() {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 }
@@ -49,6 +56,7 @@ type NameDialog = { mode: 'new' | 'rename'; targetId?: string; uri?: string; val
  */
 export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
   const { colors } = useTheme();
+  const { logout } = useAuth();
   const showSnack = useSnackbar();
   const [error, setError] = useState<string | null>(null);
   // Separat von "error", weil der Fehlertext hier einen Handlungshinweis braucht (Fehlertoleranz
@@ -80,31 +88,39 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
     Animated.spring(scale, { toValue: 1 + level * 0.6, useNativeDriver: true, speed: 20, bounciness: 4 }).start();
   }, [recorderState.metering, scale]);
 
+  /** Persistiert die neue Notizenliste am Buch (Backend ist die einzige Ablage, kein lokaler Cache). */
   async function save(notes: VoiceNote[]) {
     setSaving(true);
     try {
       await updateBook(bookId, { voiceNotes: notes });
       onChange(notes);
     } catch (e) {
+      if (e instanceof AuthError) return logout();
       setError((e as Error).message);
     } finally {
       setSaving(false);
     }
   }
 
+  /** Fragt bei Bedarf die Mikrofon-Berechtigung an und startet danach die Aufnahme. */
   async function startRecording() {
     setError(null);
     setPermissionDenied(false);
-    const status = await AudioModule.requestRecordingPermissionsAsync();
-    if (!status.granted) {
-      setError('Ohne Mikrofon-Zugriff kann keine Sprachnotiz aufgenommen werden.');
-      setPermissionDenied(true);
-      return;
+    try {
+      const status = await AudioModule.requestRecordingPermissionsAsync();
+      if (!status.granted) {
+        setError('Ohne Mikrofon-Zugriff kann keine Sprachnotiz aufgenommen werden.');
+        setPermissionDenied(true);
+        return;
+      }
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+    } catch (e) {
+      setError((e as Error).message);
     }
-    await recorder.prepareToRecordAsync();
-    recorder.record();
   }
 
+  /** Beendet die Aufnahme und öffnet den Benennen-Dialog; gespeichert wird erst nach Bestätigung. */
   async function stopRecording() {
     try {
       await recorder.stop();
@@ -117,6 +133,7 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
     setDialog({ mode: 'new', uri, value: `Notiz ${voiceNotes.length + 1}` });
   }
 
+  /** Übernimmt den im Dialog eingegebenen Namen: legt je nach Modus eine neue Notiz an oder benennt um. */
   function confirmDialog() {
     if (!dialog) return;
     const name = dialog.value.trim() || 'Notiz';
@@ -132,6 +149,7 @@ export default function VoiceNotes({ bookId, voiceNotes, onChange }: Props) {
     setConfirmDeleteId(id);
   }
 
+  /** Löscht die bestätigte Notiz und bietet sofort ein Rückgängig über die Snackbar an. */
   async function confirmRemove() {
     const note = voiceNotes.find((n) => n.id === confirmDeleteId);
     setConfirmDeleteId(null);

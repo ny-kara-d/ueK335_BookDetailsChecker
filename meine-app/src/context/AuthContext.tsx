@@ -13,6 +13,11 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/**
+ * Stellt Login-Status und -Aktionen für die ganze App bereit. Liegt im Root-Layout über dem
+ * `Stack`, der anhand von `user` zwischen Login/Registrieren und den geschützten Screens wechselt.
+ * @param children Teilbaum, der Zugriff auf `useAuth()` erhält (hier: die gesamte App)
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
