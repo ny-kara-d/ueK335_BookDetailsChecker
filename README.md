@@ -13,6 +13,10 @@ Users register/log in, then browse, search and filter books by title and genre, 
 - [expo-audio](https://docs.expo.dev/versions/latest/sdk/audio/) for the microphone-based voice note recording/playback
 - Backend: [`rest-jsondb`](https://hub.docker.com/r/noseryoung/rest-jsondb) (json-server + json-server-auth) running in Docker
 
+## Design
+
+The UI was designed in Figma before implementation: [Figma mockups](https://www.figma.com/design/oNGwcYkNVSDxN1PPXn7CRF/Lesezeit-%E2%80%93-B%C3%BCcher-App--%C3%BCK-335-?node-id=67-1637&t=tr06PtHGg9ujv90L-1) — covers login/register, home/books/detail/form/profile, feedback & loading/error states, different screen sizes, and component states.
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org) LTS (24 or 22 — avoid odd versions like 23/25)
