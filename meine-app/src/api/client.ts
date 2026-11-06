@@ -9,6 +9,21 @@ import * as SecureStore from 'expo-secure-store';
 const host = Constants.expoConfig?.hostUri?.split(':')[0] ?? 'localhost';
 const BASE_URL = `http://${host}:3030`;
 
+// Ohne Timeout hängt fetch() bei einem unerreichbaren Server (z. B. Firewall, falsches WLAN)
+// am TCP-Timeout des Betriebssystems, das können über eine Minute sein ("unendliches" Laden).
+const TIMEOUT_MS = 10000;
+
+/** fetch() mit Timeout: bricht nach TIMEOUT_MS ab statt bei schlechter Verbindung endlos zu warten. */
+async function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Eine benannte Sprachnotiz. `uri` ist ein lokaler Dateipfad, nur auf diesem Gerät gültig. */
 export type VoiceNote = {
   id: string;
@@ -48,7 +63,7 @@ export type User = { email: string; firstname?: string; lastname?: string; age?:
 async function auth(path: string, body: object, fallback: string): Promise<User> {
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}${path}`, {
+    response = await fetchWithTimeout(`${BASE_URL}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -87,7 +102,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = await SecureStore.getItemAsync('token');
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}${path}`, {
+    response = await fetchWithTimeout(`${BASE_URL}${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
