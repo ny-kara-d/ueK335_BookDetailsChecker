@@ -1,13 +1,15 @@
 // Datei von Claude, Zeitgründe und Präzision (erweitert um Profil und Registrierung mit Angaben)
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { login as apiLogin, register as apiRegister, User } from '../api/client';
+import { AuthError, login as apiLogin, register as apiRegister, updateUser, User } from '../api/client';
 
 type AuthContextType = {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (user: User & { password: string }) => Promise<void>;
+  register: (user: Omit<User, 'id'> & { password: string }) => Promise<void>;
   logout: () => Promise<void>;
+  /** Speichert Profiländerungen im Backend und in SecureStore; loggt bei abgelaufenem Token aus. */
+  updateProfile: (changes: Partial<Omit<User, 'id' | 'email'>>) => Promise<void>;
   loading: boolean;
 };
 
@@ -40,8 +42,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await apiLogin(email, password));
   }
 
-  async function register(newUser: User & { password: string }) {
+  async function register(newUser: Omit<User, 'id'> & { password: string }) {
     setUser(await apiRegister(newUser));
+  }
+
+  /** Reicht Änderungen ans Backend weiter und aktualisiert User-State + SecureStore. */
+  async function updateProfile(changes: Partial<Omit<User, 'id' | 'email'>>) {
+    if (!user) return;
+    try {
+      const { password, ...updated } = await updateUser(user.id, changes) as User & { password?: string };
+      setUser(updated);
+      await SecureStore.setItemAsync('user', JSON.stringify(updated));
+    } catch (e) {
+      if (e instanceof AuthError) return logout();
+      throw e;
+    }
   }
 
   // useCallback: useBooks hängt davon ab, sonst lädt die Liste endlos neu
@@ -57,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateProfile, loading }}>
       {children}
     </AuthContext.Provider>
   );

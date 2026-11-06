@@ -49,7 +49,9 @@ export type Book = {
 // Feste Auswahl statt Freitext: verhindert Schreibvarianten wie «roman» / «Roman» im Genre-Filter
 export const GENRES = ['Biografie', 'Drama', 'Fantasy', 'Kinderbuch', 'Krimi', 'Lyrik', 'Roman', 'Sachbuch', 'Science-Fiction'];
 
-export type User = { email: string; firstname?: string; lastname?: string; age?: number };
+// id wird mitgespeichert (anders als früher), weil updateUser() unten den eigenen
+// Datensatz gezielt per PATCH /users/:id ansprechen muss (Profil bearbeiten).
+export type User = { id: number | string; email: string; firstname?: string; lastname?: string; age?: number };
 
 /**
  * Meldet an oder registriert und speichert Token + Profil in SecureStore.
@@ -57,7 +59,7 @@ export type User = { email: string; firstname?: string; lastname?: string; age?:
  * @param path '/login' oder '/register'
  * @param body Anmeldedaten (bei /register inkl. Vorname, Nachname, Alter)
  * @param fallback Fehlertext für Nutzende, wenn der Server ablehnt
- * @returns Profil ohne Passwort und ohne interne ID
+ * @returns Profil ohne Passwort
  * @throws Error mit verständlicher Meldung (keine Verbindung, falsche Daten, E-Mail vergeben)
  */
 async function auth(path: string, body: object, fallback: string): Promise<User> {
@@ -76,7 +78,7 @@ async function auth(path: string, body: object, fallback: string): Promise<User>
     throw new Error(text.includes('already exists') ? 'Diese E-Mail ist bereits registriert. Melde dich an.' : fallback);
   }
   const { accessToken, user } = await response.json();
-  const { password, id, ...profile } = user;
+  const { password, ...profile } = user;
   await SecureStore.setItemAsync('token', accessToken);
   await SecureStore.setItemAsync('user', JSON.stringify(profile));
   return profile;
@@ -93,10 +95,10 @@ export const login = (email: string, password: string) =>
 
 /**
  * Legt ein neues Konto an.
- * @param user Pflichtfelder email/password plus optionale Profilangaben (Vorname, Nachname, Alter)
- * @returns Profil der neu angelegten Person
+ * @param user Pflichtfelder email/password plus optionale Profilangaben (Vorname, Nachname, Alter); ohne `id`, die vergibt das Backend
+ * @returns Profil der neu angelegten Person inkl. der vom Backend vergebenen `id`
  */
-export const register = (user: User & { password: string }) =>
+export const register = (user: Omit<User, 'id'> & { password: string }) =>
   auth('/register', user, 'Registrierung fehlgeschlagen. Versuche es erneut.');
 
 /** Token abgelaufen oder ungültig: die App meldet dann ab und zeigt den Login. */
@@ -161,3 +163,12 @@ export const updateBook = (id: Book['id'], changes: Partial<Book>) =>
 /** Löscht ein Buch endgültig aus dem Katalog. */
 export const deleteBook = (id: Book['id']) =>
   request<void>(`/books/${id}`, { method: 'DELETE' });
+
+/**
+ * Aktualisiert das eigene Profil (Vorname, Nachname, Alter) im Backend.
+ * @param id eigene User-ID (aus `User.id`)
+ * @param changes nur die zu ändernden Felder
+ * @returns das aktualisierte Profil inkl. Passwort-Hash, siehe `auth()` zum Herausfiltern
+ */
+export const updateUser = (id: User['id'], changes: Partial<Omit<User, 'id' | 'email'>>) =>
+  request<User>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(changes) });
