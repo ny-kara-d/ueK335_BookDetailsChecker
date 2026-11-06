@@ -10,6 +10,7 @@ import BookRow from '../../components/BookRow';
 import StateView from '../../components/StateView';
 import { getInitials } from '../../utils';
 
+/** Home-Screen: Statistik-Übersicht, neuste Bücher und Top-bewertete Bücher. */
 export default function HomeScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();

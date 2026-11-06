@@ -3,16 +3,22 @@ import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Appbar, Button, Dialog, Divider, FAB, Icon, Portal, Text, useTheme } from 'react-native-paper';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { Book, createBook, deleteBook, getBook } from '../../api/client';
+import { AuthError, Book, createBook, deleteBook, getBook } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 import { useSnackbar } from '../../context/SnackbarContext';
 import BookCover from '../../components/BookCover';
 import StateView from '../../components/StateView';
 import VoiceNotes from '../../components/VoiceNotes';
 import { COVER_COLORS } from '../../theme';
 
+/**
+ * Detailansicht eines Buchs: Cover, Metadaten, Sprachnotizen sowie Bearbeiten/Löschen.
+ * Lädt bei jedem Fokussieren neu, damit Änderungen aus dem Formular sofort sichtbar sind.
+ */
 export default function BookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { logout } = useAuth();
   const showSnack = useSnackbar();
   const [book, setBook] = useState<Book | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,10 +27,11 @@ export default function BookDetailScreen() {
 
   const load = useCallback(() => {
     setError(null);
-    getBook(id).then(setBook).catch((e) => setError(e.message));
-  }, [id]);
+    getBook(id).then(setBook).catch((e) => (e instanceof AuthError ? logout() : setError(e.message)));
+  }, [id, logout]);
   useFocusEffect(load); // nach «Bearbeiten» die neuen Daten zeigen
 
+  /** Löscht das Buch nach Bestätigung; bei abgelaufenem Token wird stattdessen ausgeloggt. */
   async function remove() {
     if (!book) return;
     setDeleting(true);
@@ -37,6 +44,7 @@ export default function BookDetailScreen() {
     } catch (e) {
       setDeleting(false);
       setConfirm(false);
+      if (e instanceof AuthError) return logout();
       showSnack((e as Error).message, { label: 'Erneut versuchen', onPress: remove });
     }
   }

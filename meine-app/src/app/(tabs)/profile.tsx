@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils';
 
+/** Zeigt das Profil der eingeloggten Person und bietet den Logout (mit Bestätigungsdialog). */
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { colors } = useTheme();

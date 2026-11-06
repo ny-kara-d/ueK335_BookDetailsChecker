@@ -8,7 +8,10 @@ const ICONS: Record<string, [string, string]> = {
   profile: ['account', 'account-outline'],
 };
 
-// Expo-Router-Tabs, aber mit der Paper-BottomNavigation als Leiste (wie in Figma)
+/**
+ * Tab-Navigation für Home/Bücher/Profil. Nutzt Expo-Router-Tabs für die Logik, aber die
+ * Paper-`BottomNavigation` als Leiste, damit sie wie im Figma-Mockup aussieht.
+ */
 export default function TabLayout() {
   return (
     <Tabs

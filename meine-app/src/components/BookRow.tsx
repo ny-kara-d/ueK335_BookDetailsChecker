@@ -5,6 +5,10 @@ import { router } from 'expo-router';
 import { Book } from '../api/client';
 import BookCover from './BookCover';
 
+/**
+ * Eine Zeile in der Bücherliste: Cover, Titel/Autor:in, Genre/Jahr/Bewertung; Tippen öffnet die Detailansicht.
+ * @param book anzuzeigendes Buch
+ */
 export default function BookRow({ book }: { book: Book }) {
   const { colors } = useTheme();
   const info = [book.genre, book.year].filter(Boolean).join(' · ');

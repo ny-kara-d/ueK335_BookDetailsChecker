@@ -6,6 +6,10 @@ import { Snackbar } from 'react-native-paper';
 type Action = { label: string; onPress: () => void };
 const SnackbarContext = createContext<(message: string, action?: Action) => void>(() => {});
 
+/**
+ * Stellt eine einzige, app-weite Snackbar bereit (statt einer pro Screen).
+ * @param children Teilbaum, der Zugriff auf `useSnackbar()` erhält
+ */
 export function SnackbarProvider({ children }: { children: ReactNode }) {
   const [snack, setSnack] = useState<{ message: string; action?: Action } | null>(null);
 
