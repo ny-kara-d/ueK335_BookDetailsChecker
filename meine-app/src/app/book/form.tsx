@@ -1,7 +1,7 @@
 // Von Claude generiert (KI-Einsatz, siehe Technischer Bericht)
 import { useEffect, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Appbar, Button, HelperText, Menu, Text, TextInput, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Appbar, Button, HelperText, Icon, Menu, Text, TextInput, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { AuthError, createBook, GENRES, getBook, updateBook } from '../../api/client';
@@ -27,7 +27,7 @@ const GENRE_ICONS: Record<string, string> = {
   'Science-Fiction': 'rocket-launch-outline',
 };
 
-const EMPTY = { title: '', author: '', genre: '', year: '', pages: '', description: '', coverColor: COVER_COLORS[0] };
+const EMPTY = { title: '', author: '', genre: '', year: '', pages: '', description: '', coverColor: COVER_COLORS[0], rating: null as number | null };
 
 /**
  * Formular zum Anlegen oder Bearbeiten eines Buchs. Ohne `id`-Parameter: neues Buch mit
@@ -54,6 +54,7 @@ export default function BookFormScreen() {
         title: b.title ?? '', author: b.author ?? '', genre: b.genre ?? '',
         year: b.year != null ? String(b.year) : '', pages: b.pages != null ? String(b.pages) : '',
         description: b.description ?? '', coverColor: b.coverColor ?? COVER_COLORS[0],
+        rating: b.rating != null ? Math.round(Number(b.rating)) : null,
       }))
       .catch((e) => (e instanceof AuthError ? logout() : setError(e.message)))
       .finally(() => setLoading(false));
@@ -83,6 +84,7 @@ export default function BookFormScreen() {
       pages: form.pages ? Number(form.pages) : undefined,
       description: form.description.trim(),
       coverColor: form.coverColor,
+      rating: form.rating ?? undefined,
     };
     try {
       if (id) await updateBook(id, book);
@@ -192,6 +194,24 @@ export default function BookFormScreen() {
               </View>
             </View>
             <TextInput mode="outlined" label="Beschreibung" value={form.description} onChangeText={set('description')} multiline numberOfLines={4} disabled={saving} />
+            <View style={{ gap: 8 }}>
+              <Text variant="bodySmall" style={{ color: colors.onSurfaceVariant }}>Bewertung</Text>
+              <View style={{ flexDirection: 'row', gap: 4 }}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Pressable
+                    key={n}
+                    onPress={() => setForm((f) => ({ ...f, rating: f.rating === n ? null : n }))}
+                    disabled={saving}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${n} von 5 Sternen`}
+                    accessibilityState={{ selected: (form.rating ?? 0) >= n }}
+                    hitSlop={6}
+                  >
+                    <Icon source={(form.rating ?? 0) >= n ? 'star' : 'star-outline'} size={32} color={(form.rating ?? 0) >= n ? colors.primary : colors.outline} />
+                  </Pressable>
+                ))}
+              </View>
+            </View>
             <HelperText type="info" visible>* Pflichtfeld</HelperText>
           </ScrollView>
           <View style={styles.bottom}>
