@@ -2,6 +2,7 @@
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Appbar, Button, Dialog, Divider, FAB, Icon, Portal, Text, useTheme } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { AuthError, Book, createBook, deleteBook, getBook } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
@@ -18,6 +19,7 @@ import { COVER_COLORS } from '../../theme';
 export default function BookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { logout } = useAuth();
   const showSnack = useSnackbar();
   const [book, setBook] = useState<Book | null>(null);
@@ -111,7 +113,7 @@ export default function BookDetailScreen() {
           />
         </View>
       </ScrollView>
-      <FAB icon="pencil-outline" label="Bearbeiten" style={styles.fab} onPress={() => router.push({ pathname: '/book/form', params: { id: String(book.id) } })} />
+      <FAB icon="pencil-outline" label="Bearbeiten" style={[styles.fab, { bottom: 24 + insets.bottom }]} onPress={() => router.push({ pathname: '/book/form', params: { id: String(book.id) } })} />
 
       <Portal>
         <Dialog visible={confirm} onDismiss={() => !deleting && setConfirm(false)}>
@@ -135,5 +137,5 @@ const styles = StyleSheet.create({
   stars: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingTop: 4 },
   body: { padding: 16, paddingTop: 20, gap: 24 },
   infos: { flexDirection: 'row' },
-  fab: { position: 'absolute', right: 16, bottom: 24 },
+  fab: { position: 'absolute', right: 16 },
 });
